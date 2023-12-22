@@ -4,18 +4,15 @@
 Enable Discord's developer mode, if you don't know how you really shouldn't be screwing with experiments anyway. Then use `Ctrl+Shift+I` to open the console within the Discord app. 
 Paste this into the console:
 ```Javascript
-let wpRequire;
-window.webpackChunkdiscord_app.push([[ Math.random() ], {}, (req) => { wpRequire = req; }]);
-mod = Object.values(wpRequire.c).find(x => typeof x?.exports?.Z?.isDeveloper !== "undefined");
-usermod = Object.values(wpRequire.c).find(x => x?.exports?.default?.getUsers)
-nodes = Object.values(mod.exports.Z._dispatcher._actionHandlers._dependencyGraph.nodes)
-try {
-    nodes.find(x => x.name == "ExperimentStore").actionHandler["OVERLAY_INITIALIZE"]({user: {flags: 1}})
-} catch (e) {}
-oldGetUser = usermod.exports.default.__proto__.getCurrentUser;
-usermod.exports.default.__proto__.getCurrentUser = () => ({isStaff: () => true})
-nodes.find(x => x.name == "DeveloperExperimentStore").actionHandler["CONNECTION_OPEN"]()
-usermod.exports.default.__proto__.getCurrentUser = oldGetUser
+let cache; webpackChunkdiscord_app.push([["wp_isdev_patch"], {}, r => cache=r.c]);
+var UserStore = Object.values(cache).find(m => m?.exports?.default?.getUsers).exports.default;
+var actions = Object.values(UserStore._dispatcher._actionHandlers._dependencyGraph.nodes);
+var user = UserStore.getCurrentUser();
+actions.find(n => n.name === "ExperimentStore").actionHandler.CONNECTION_OPEN({
+	type: "CONNECTION_OPEN", user: {flags: user.flags |= 1}, experiments: [],
+});
+actions.find(n => n.name === "DeveloperExperimentStore").actionHandler.CONNECTION_OPEN();
+webpackChunkdiscord_app.pop(); user.flags &= ~1; "done";
 
 
 ```
